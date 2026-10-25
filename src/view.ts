@@ -322,7 +322,11 @@ export class TaskHubView extends ItemView {
 		if (task.due) {
 			const n = daysUntil(task.due);
 			const b = badges.createSpan({ cls: "task-hub-badge task-hub-badge-due" });
-			if (task.status !== "closed") b.toggleClass("is-overdue", n < 0), b.toggleClass("is-today", n === 0), b.toggleClass("is-soon", n > 0 && n <= 3);
+			if (task.status !== "closed") {
+				b.toggleClass("is-overdue", n < 0);
+				b.toggleClass("is-today", n === 0);
+				b.toggleClass("is-soon", n > 0 && n <= 3);
+			}
 			const ic = b.createSpan({ cls: "task-hub-icon" });
 			setIcon(ic, "calendar");
 			b.createSpan({ text: dueLabel(task.due) });

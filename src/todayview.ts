@@ -112,10 +112,10 @@ export class TodayView extends ItemView {
 			const unpicked = pending.filter((i) => !state.focus.includes(i.id));
 			if (unpicked.length) {
 				const accept = card.createEl("button", { cls: "th-today-accept", text: `Accept ${unpicked.length === pending.length ? "all" : "the rest"}` });
-				accept.addEventListener("click", async () => {
+				accept.addEventListener("click", () => void (async () => {
 					for (const i of unpicked) if (!(await this.plugin.addToFocus(i.id))) break;
 					this.render();
-				});
+				})());
 			}
 		}
 
@@ -293,10 +293,10 @@ export class TodayView extends ItemView {
 		if (o.check) {
 			const cb = row.createEl("input", { type: "checkbox", cls: "th-today-check" });
 			cb.checked = task.status === "closed";
-			cb.addEventListener("change", async () => {
+			cb.addEventListener("change", () => void (async () => {
 				await this.plugin.setStatus(task.id, cb.checked ? "closed" : "open");
 				this.render();
-			});
+			})());
 		}
 		const body = row.createDiv({ cls: "th-today-row-body" });
 		const line = body.createDiv({ cls: "th-today-row-title" });
@@ -324,10 +324,10 @@ export class TodayView extends ItemView {
 		return row;
 	}
 
-	private rowButton(row: HTMLElement, icon: string, label: string, onClick: () => void) {
+	private rowButton(row: HTMLElement, icon: string, label: string, onClick: () => void | Promise<void>) {
 		const b = row.createEl("button", { cls: "clickable-icon th-today-rowbtn", attr: { "aria-label": label } });
 		setIcon(b, icon);
-		b.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
+		b.addEventListener("click", (e) => { e.stopPropagation(); void onClick(); });
 	}
 
 	private addFocusButton(row: HTMLElement, task: Task) {

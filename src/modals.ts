@@ -1,4 +1,4 @@
-import { App, FuzzyMatch, FuzzySuggestModal, Modal, Notice, Setting, TFile, normalizePath } from "obsidian";
+import { App, FuzzyMatch, FuzzySuggestModal, Modal, Notice, Setting, TFile, normalizePath, requireApiVersion } from "obsidian";
 import type TaskHubPlugin from "./main";
 import { Task, basename, formatDate, isImagePath, todayISO } from "./types";
 import { computeSchedule } from "./schedule";
@@ -21,7 +21,7 @@ export function isCompleteDate(v: string): boolean {
  * under the cursor. A value is only committed when the field is left or Enter is
  * pressed, and only if its year is plausible.
  */
-export function bindDate(input: HTMLInputElement, initial: string | null, commit: (v: string | null) => void): () => boolean {
+export function bindDate(input: HTMLInputElement, initial: string | null, commit: (v: string | null) => unknown): () => boolean {
 	input.type = "date";
 	input.value = initial ?? "";
 	let last = input.value;
@@ -34,7 +34,7 @@ export function bindDate(input: HTMLInputElement, initial: string | null, commit
 			return false;
 		}
 		last = v;
-		commit(v || null);
+		void commit(v || null);
 		return true;
 	};
 	input.addEventListener("blur", () => void done());
@@ -47,7 +47,7 @@ export function bindDate(input: HTMLInputElement, initial: string | null, commit
 /** Pick a markdown note from the vault (master-list notes first), or create a new one. */
 export class NotePickerModal extends FuzzySuggestModal<NoteChoice> {
 	private query = "";
-	constructor(app: App, private plugin: TaskHubPlugin, private onPick: (file: TFile) => void) {
+	constructor(app: App, private plugin: TaskHubPlugin, private onPick: (file: TFile) => void | Promise<void>) {
 		super(app);
 		this.setPlaceholder("Link to note page… (or type a name to create one)");
 	}
@@ -83,7 +83,7 @@ export class NotePickerModal extends FuzzySuggestModal<NoteChoice> {
 			new NewNoteModal(this.app, this.plugin, this.query, this.onPick).open();
 			return;
 		}
-		this.onPick(item);
+		void this.onPick(item);
 	}
 }
 
@@ -91,7 +91,7 @@ export class NotePickerModal extends FuzzySuggestModal<NoteChoice> {
 export class NewNoteModal extends Modal {
 	private name: string;
 	private folder: string;
-	constructor(app: App, private plugin: TaskHubPlugin, initialName: string, private onCreated: (file: TFile) => void) {
+	constructor(app: App, private plugin: TaskHubPlugin, initialName: string, private onCreated: (file: TFile) => void | Promise<void>) {
 		super(app);
 		this.name = initialName;
 		const active = this.app.workspace.getActiveFile();
@@ -134,7 +134,7 @@ export class NewNoteModal extends Modal {
 		}
 		await this.plugin.addNote(file.path);
 		this.close();
-		this.onCreated(file);
+		void this.onCreated(file);
 	}
 	onClose() {
 		this.contentEl.empty();
@@ -143,7 +143,7 @@ export class NewNoteModal extends Modal {
 
 /** Pick an existing image file from the vault. */
 export class ImagePickerModal extends FuzzySuggestModal<TFile> {
-	constructor(app: App, private onPick: (file: TFile) => void) {
+	constructor(app: App, private onPick: (file: TFile) => void | Promise<void>) {
 		super(app);
 		this.setPlaceholder("Attach image from vault…");
 	}
@@ -154,7 +154,7 @@ export class ImagePickerModal extends FuzzySuggestModal<TFile> {
 		return file.path;
 	}
 	onChooseItem(file: TFile) {
-		this.onPick(file);
+		void this.onPick(file);
 	}
 }
 
@@ -180,7 +180,7 @@ export class TaskModal extends Modal {
 			t.setPlaceholder("What needs doing?").onChange((v) => (this.title = v));
 			t.inputEl.addClass("task-hub-modal-title");
 			t.inputEl.addEventListener("keydown", (e) => {
-				if (e.key === "Enter") { e.preventDefault(); this.submit(); }
+				if (e.key === "Enter") { e.preventDefault(); void this.submit(); }
 			});
 			window.setTimeout(() => t.inputEl.focus(), 0);
 		});
@@ -224,7 +224,7 @@ export class TaskModal extends Modal {
 /** Simple single-line text prompt. */
 export class PromptModal extends Modal {
 	private value: string;
-	constructor(app: App, private heading: string, initial: string, private onSubmit: (v: string) => void) {
+	constructor(app: App, private heading: string, initial: string, private onSubmit: (v: string) => void | Promise<void>) {
 		super(app);
 		this.value = initial;
 	}
@@ -235,14 +235,14 @@ export class PromptModal extends Modal {
 			t.setValue(this.value).onChange((v) => (this.value = v));
 			t.inputEl.addClass("task-hub-modal-title");
 			t.inputEl.addEventListener("keydown", (e) => {
-				if (e.key === "Enter") { e.preventDefault(); this.submit(); }
+				if (e.key === "Enter") { e.preventDefault(); void this.submit(); }
 			});
 			window.setTimeout(() => { t.inputEl.focus(); t.inputEl.select(); }, 0);
 		});
 		new Setting(contentEl).addButton((b) => b.setButtonText("OK").setCta().onClick(() => this.submit()));
 	}
 	private submit() {
-		if (this.value.trim()) this.onSubmit(this.value.trim());
+		if (this.value.trim()) void this.onSubmit(this.value.trim());
 		this.close();
 	}
 	onClose() {
@@ -321,7 +321,12 @@ export class DueDateModal extends Modal {
 			window.setTimeout(() => input.focus(), 0);
 		});
 		const row = new Setting(contentEl);
-		row.addButton((b) => b.setButtonText("Clear").setWarning().onClick(() => this.done(null)));
+		row.addButton((b) => {
+			// setDestructive arrived in Obsidian 1.13; older versions take the class it sets
+			if (requireApiVersion("1.13.0")) b.setDestructive();
+			else b.buttonEl.addClass("mod-warning");
+			b.setButtonText("Clear").onClick(() => this.done(null));
+		});
 		row.addButton((b) => b.setButtonText("Set").setCta().onClick(() => this.done(this.value || null)));
 	}
 	private done(v: string | null) {
@@ -352,7 +357,7 @@ export class BackupPickerModal extends FuzzySuggestModal<string> {
 
 /** Pick another task (for prerequisites). */
 export class TaskPickerModal extends FuzzySuggestModal<Task> {
-	constructor(app: App, private tasks: Task[], private onPick: (task: Task) => void, placeholder = "Choose a task…") {
+	constructor(app: App, private tasks: Task[], private onPick: (task: Task) => void | Promise<void>, placeholder = "Choose a task…") {
 		super(app);
 		this.setPlaceholder(placeholder);
 	}
@@ -363,7 +368,7 @@ export class TaskPickerModal extends FuzzySuggestModal<Task> {
 		return [task.title, task.type, task.note ? basename(task.note) : ""].filter(Boolean).join(" · ");
 	}
 	onChooseItem(task: Task) {
-		this.onPick(task);
+		void this.onPick(task);
 	}
 }
 
@@ -424,7 +429,7 @@ export class ScheduleModal extends Modal {
 			.setName("Progress")
 			.setDesc("Percent complete. Closed tasks always count as 100%.")
 			.addSlider((sl) =>
-				sl.setLimits(0, 100, 5).setValue(task.percent ?? 0).setDynamicTooltip().onChange(async (v) => {
+				sl.setLimits(0, 100, 5).setValue(task.percent ?? 0).onChange(async (v) => {
 					await this.plugin.updateTask(task.id, { percent: v });
 					this.onDone?.();
 				}),
@@ -541,10 +546,10 @@ export class ScheduleModal extends Modal {
 /** Choose one or more prerequisites, narrowed by note. */
 export class PrerequisitePickerModal extends Modal {
 	private chosen = new Set<string>();
-	private note: string | "*";
+	private note: string; // a note path, or "*" for every note
 	private query = "";
 
-	constructor(app: App, private task: Task, private candidates: Task[], private onAdd: (ids: string[]) => void) {
+	constructor(app: App, private task: Task, private candidates: Task[], private onAdd: (ids: string[]) => void | Promise<void>) {
 		super(app);
 		// most prerequisites live in the same project, so start there
 		this.note = task.note && candidates.some((c) => c.note === task.note) ? task.note : "*";
@@ -567,7 +572,7 @@ export class PrerequisitePickerModal extends Modal {
 			noteSelect.createEl("option", { value: n, text: `${basename(n)} (${count})` });
 		}
 		noteSelect.value = this.note;
-		noteSelect.addEventListener("change", () => { this.note = noteSelect.value as string; this.drawList(); });
+		noteSelect.addEventListener("change", () => { this.note = noteSelect.value; this.drawList(); });
 
 		const search = controls.createEl("input", { type: "search", placeholder: "Search tasks…" });
 		search.addEventListener("input", () => { this.query = search.value; this.drawList(); });
@@ -581,7 +586,7 @@ export class PrerequisitePickerModal extends Modal {
 			this.addBtn = b;
 			b.setButtonText("Add").setCta().onClick(() => {
 				if (!this.chosen.size) return;
-				this.onAdd(Array.from(this.chosen));
+				void this.onAdd(Array.from(this.chosen));
 				this.close();
 			});
 		});

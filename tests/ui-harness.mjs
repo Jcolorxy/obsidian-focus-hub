@@ -26,7 +26,7 @@ export async function loadUI(entry) {
         export class Modal { constructor(app) { this.app = app; this.contentEl = document.body.createDiv(); this.modalEl = this.contentEl; } open() { this.onOpen(); globalThis.lastModal = this; } close() { this.onClose(); } }
         export class Plugin {} export class SecretComponent {} export class PluginSettingTab {} export class FuzzySuggestModal extends Modal {}
         export class Notice {} export class TFile {} export class TFolder {} export class Menu {}
-        export function setIcon() {} export function normalizePath(p) { return p; }
+        export function setIcon() {} export function normalizePath(p) { return p; } export function requireApiVersion() { return true; }
         export class Setting { constructor(el) { this.el = el; } addButton(fn) { const el = this.el.createEl('button'); const b = {setButtonText(v) {el.textContent=v;return b;},setCta(){return b;},onClick(f){el.addEventListener('click',f);return b;}}; fn(b); return this; } }
       `}));
     }}]});

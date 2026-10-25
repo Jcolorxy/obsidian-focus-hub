@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { build } from 'esbuild';
 // pin the zone the dates are bucketed in, so results don't depend on the host
-globalThis.TASK_HUB_TZ = 'Australia/Sydney';
+process.env.TZ = 'Australia/Sydney';
 
 const bundle = await build({ entryPoints: ['src/meetings.ts'], bundle: true, platform: 'node', format: 'esm', write: false });
 const { parseMeetings, localDate } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);

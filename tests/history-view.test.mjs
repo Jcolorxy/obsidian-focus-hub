@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { document, dom, loadUI } from './ui-harness.mjs';
 // pin the zone the dates are bucketed in, so results don't depend on the host
-globalThis.TASK_HUB_TZ = 'Australia/Sydney';
+process.env.TZ = 'Australia/Sydney';
 test('history and completion layouts wrap on narrow panes and retain theme and keyboard focus cues', () => {
   const css = readFileSync('styles.css', 'utf8');
   assert.match(css, /\.th-history\s*\{[^}]*container:\s*th-history/);

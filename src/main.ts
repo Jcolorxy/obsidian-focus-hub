@@ -8,7 +8,7 @@ import { CompletionModal } from "./completion";
 import { TODAY_VIEW_TYPE, TodayView } from "./todayview";
 import type { Calendar } from "./schedule";
 import { TaskHubView, VIEW_TYPE } from "./view";
-import { BackupPickerModal, ScheduleModal, TaskModal } from "./modals";
+import { BackupPickerModal, TaskModal } from "./modals";
 import { TaskHubSettingTab } from "./settings";
 import { NoteSync } from "./notesync";
 import { hideMarkerExtension } from "./hidemarker";
@@ -131,7 +131,6 @@ export default class TaskHubPlugin extends Plugin {
 		for (const id of stale) {
 			try {
 				await manager.disablePlugin(id);
-				console.info(`Focus Hub: switched off the older copy "${id}"`);
 			} catch (e) {
 				console.error(`Focus Hub: could not switch off "${id}"`, e);
 				new Notice(stillRunning, 0);
@@ -277,7 +276,7 @@ export default class TaskHubPlugin extends Plugin {
 			leaf = this.app.workspace.getLeaf("tab");
 			await leaf.setViewState({ type, active: true });
 		}
-		this.app.workspace.revealLeaf(leaf);
+		await this.app.workspace.revealLeaf(leaf);
 	}
 
 	// ---------- tasks ----------
@@ -726,8 +725,10 @@ export default class TaskHubPlugin extends Plugin {
 	 */
 	async createTimelineNote(parent: TFile): Promise<TFile | null> {
 		const path = normalizePath(`${parent.parent?.path === "/" ? "" : `${parent.parent?.path}/`}${parent.basename} — Timeline.md`);
-		let file = this.app.vault.getAbstractFileByPath(path);
-		if (!(file instanceof TFile)) {
+		const existing = this.app.vault.getAbstractFileByPath(path);
+		let file: TFile;
+		if (existing instanceof TFile) file = existing;
+		else {
 			const body = [
 				`Timeline for [[${parent.basename}]]. Drag a row by its handle to change the order.`,
 				"",
@@ -741,12 +742,12 @@ export default class TaskHubPlugin extends Plugin {
 			new Notice(`Created ${path}`);
 		}
 		// link from the project note, once
-		const link = `[[${(file as TFile).basename}]]`;
+		const link = `[[${file.basename}]]`;
 		await this.app.vault.process(parent, (content) =>
 			content.includes(link) ? content : `${content.replace(/\s*$/, "")}\n\nTimeline: ${link}\n`,
 		);
-		await this.app.workspace.getLeaf(false).openFile(file as TFile);
-		return file as TFile;
+		await this.app.workspace.getLeaf(false).openFile(file);
+		return file;
 	}
 
 	/**

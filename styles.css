@@ -29,8 +29,8 @@
 	flex: 1 1 200px;
 	min-width: 160px;
 }
-.task-hub .task-hub-search {
-	padding-inline-start: 28px !important; /* Obsidian mobile overrides input padding */
+.task-hub .task-hub-search-wrap > input.task-hub-search {
+	padding-inline-start: 28px; /* beats Obsidian mobile's input padding by specificity */
 }
 .task-hub-select {
 	max-width: 220px;
@@ -462,8 +462,7 @@
 			"check title title"
 			". badges actions";
 		align-items: center;
-		column-gap: var(--size-4-2);
-		row-gap: 4px;
+		gap: 4px var(--size-4-2);
 	}
 	.task-hub-check { grid-area: check; }
 	.task-hub-title,
@@ -1173,7 +1172,6 @@
 		border-color: #ccc !important;
 	}
 	.th-gantt-row {
-		break-inside: avoid;
 		page-break-inside: avoid;
 	}
 	.th-gantt-row:hover .th-gantt-side,
@@ -1587,9 +1585,8 @@
 	opacity: 0.55;
 }
 .th-today-row.is-critical .th-today-row-title > span:last-child {
-	text-decoration: underline;
-	text-decoration-color: var(--color-red);
-	text-underline-offset: 3px;
+	border-bottom: 1.5px solid var(--color-red);
+	padding-bottom: 1px;
 }
 .th-today-check {
 	margin-top: 3px;

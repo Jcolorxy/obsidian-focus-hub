@@ -3,7 +3,7 @@ import type TaskHubPlugin from "./main";
 import { GAP_LABEL, STATUSES, Status, Task, basename, formatDate, schedulingGap, todayISO } from "./types";
 import {
 	Calendar, Scheduled, addDays, addWorkingDays, applyManualOrder, chartRange, computeSchedule, diffDays,
-	parseISO, workingDaysBetween,
+	parseISO,
 } from "./schedule";
 import { ScheduleModal } from "./modals";
 import { ganttToSvg, svgToPng } from "./ganttsvg";
@@ -510,7 +510,7 @@ export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOpti
 					? `Duration ${Math.max(1, r.durationDays + deltaDays)} working days`
 					: `Start ${fmtDay(addWorkingDays(r.start, Math.abs(deltaDays), cal))}`.replace("Start", deltaDays < 0 ? "Start ←" : "Start"));
 			};
-			const up = async () => {
+			const finish = async () => {
 				bar.removeEventListener("pointermove", move);
 				bar.removeEventListener("pointerup", up);
 				bar.removeClass("is-live");
@@ -526,6 +526,7 @@ export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOpti
 				}
 				onChange?.();
 			};
+			const up = () => void finish();
 			bar.addEventListener("pointermove", move);
 			bar.addEventListener("pointerup", up);
 		});
@@ -575,18 +576,16 @@ export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOpti
 	// ---- dependency arrows ----
 	// Rows grow to fit wrapped labels, so the vertical positions are measured from the
 	// laid-out lanes rather than calculated from a fixed row height.
-	const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-	svg.setAttribute("class", "th-gantt-links");
-	body.appendChild(svg);
+	const svg = body.createSvg("svg", { cls: "th-gantt-links" });
 
 	const drawLinks = () => {
 		if (!body.isConnected) return;
 		svg.empty();
 		svg.setAttribute("width", String(width));
 		svg.setAttribute("height", String(body.offsetHeight));
-		const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-		defs.innerHTML = `<marker id="th-gantt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor"/></marker>`;
-		svg.appendChild(defs);
+		svg.createSvg("defs")
+			.createSvg("marker", { attr: { id: "th-gantt-arrow", viewBox: "0 0 8 8", refX: 7, refY: 4, markerWidth: 6, markerHeight: 6, orient: "auto" } })
+			.createSvg("path", { attr: { d: "M0,0 L8,4 L0,8 z", fill: "currentColor" } });
 		const midY = (lane: HTMLElement) => lane.offsetTop + lane.offsetHeight / 2;
 		const byId = new Map(all.map((r) => [r.task.id, r]));
 		for (const r of rows) {
@@ -601,12 +600,11 @@ export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOpti
 				const x2 = clampX(r.start);
 				const y2 = midY(toLane);
 				const yMid = (y1 + y2) / 2;
-				const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				const path = svg.createSvg("path");
 				path.setAttribute("d", `M ${x1} ${y1} H ${x1 + 8} V ${yMid} H ${x2 - 8} V ${y2} H ${x2 - 2}`);
 				path.setAttribute("class", "th-gantt-link");
 				if (o.critical && r.critical && dep.critical) path.setAttribute("data-critical", "true");
 				path.setAttribute("marker-end", "url(#th-gantt-arrow)");
-				svg.appendChild(path);
 			}
 		}
 	};
@@ -774,13 +772,13 @@ export function renderGanttBlock(plugin: TaskHubPlugin, el: HTMLElement, source:
 		const actions = bar.createDiv({ cls: "th-gantt-actions" });
 		const baselineBtn = actions.createEl("button", { text: "Set baseline" });
 		baselineBtn.title = "Snapshot today's dates as the agreed plan for every task shown";
-		baselineBtn.addEventListener("click", async () => {
+		baselineBtn.addEventListener("click", () => void (async () => {
 			const tasks = selectTasks(plugin.data.tasks, options);
 			const rows = computeSchedule(tasks, todayISO(), plugin.calendar);
 			await plugin.setBaseline(rows.map((r) => ({ id: r.task.id, start: r.start, end: r.end })));
 			new Notice(`Baseline set for ${rows.length} task${rows.length === 1 ? "" : "s"}`);
 			draw();
-		});
+		})());
 
 		const imageBtn = actions.createEl("button", { cls: "th-gantt-export" });
 		setIcon(imageBtn.createSpan({ cls: "th-gantt-export-icon" }), "image-down");
@@ -832,7 +830,7 @@ export function renderGanttBlock(plugin: TaskHubPlugin, el: HTMLElement, source:
 
 /** The pane the note scrolls in, in either reading or editing view. */
 function scrollParent(el: HTMLElement): HTMLElement | null {
-	return el.closest(".markdown-preview-view, .cm-scroller") as HTMLElement | null;
+	return el.closest<HTMLElement>(".markdown-preview-view, .cm-scroller");
 }
 
 /** Hand off to Obsidian's own "Export to PDF", which prints the current note. */

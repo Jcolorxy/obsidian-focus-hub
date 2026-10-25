@@ -43,7 +43,7 @@ export function parseBlocks(text: string): Block[] {
 /** Pad rows to equal width and drop columns that are empty everywhere. */
 function normalise(rows: string[][]): string[][] {
 	const width = Math.max(...rows.map((r) => r.length));
-	const padded = rows.map((r) => [...r.map((c) => c.trim()), ...Array(width - r.length).fill("")]);
+	const padded = rows.map((r) => [...r.map((c) => c.trim()), ...Array<string>(width - r.length).fill("")]);
 	const keep = Array.from({ length: width }, (_, c) => padded.some((r) => r[c] !== ""));
 	return padded.map((r) => r.filter((_, c) => keep[c]));
 }

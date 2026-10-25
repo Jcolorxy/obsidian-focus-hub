@@ -36,6 +36,6 @@ export function parseMeetings(markdown: string, date: string) {
 		}
 	}
 	// CommonMark backslash escapes apply only to ASCII punctuation.
-	const plain = (text: string) => text.replace(/\\([!-/:-@\[-`{-~])/g, "$1");
+	const plain = (text: string) => text.replace(/\\([!-/:-@[-`{-~])/g, "$1");
 	return { context: plain(context.join(" ")), found, rows: rows.map(plain) };
 }

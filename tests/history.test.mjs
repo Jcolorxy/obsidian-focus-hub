@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { build } from 'esbuild';
 // pin the zone the dates are bucketed in, so results don't depend on the host
-globalThis.TASK_HUB_TZ = 'Australia/Sydney';
+process.env.TZ = 'Australia/Sydney';
 const bundle = await build({ entryPoints: ['src/history.ts'], bundle: true, platform: 'node', format: 'esm', write: false });
 const { historyModel } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 test('inclusive year/date/note filters intersect; undated work stays separate from date matches', () => {

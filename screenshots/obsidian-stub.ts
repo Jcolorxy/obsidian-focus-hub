@@ -16,11 +16,19 @@ function make(tag: string, o?: O): HTMLElement {
 	for (const [k, v] of Object.entries(o.attr ?? {})) el.setAttribute(k, String(v));
 	return el;
 }
+function makeSvg(tag: string, o?: O): SVGElement {
+	const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+	if (typeof o === "string") { el.setAttribute("class", o); return el; }
+	if (o?.cls) el.setAttribute("class", Array.isArray(o.cls) ? o.cls.join(" ") : o.cls);
+	for (const [k, v] of Object.entries(o?.attr ?? {})) el.setAttribute(k, String(v));
+	return el;
+}
 const P = Element.prototype as unknown as Record<string, unknown>;
 Object.assign(P, {
 	createEl(this: Element, tag: string, o?: O, cb?: (el: HTMLElement) => void) { const el = make(tag, o); this.appendChild(el); cb?.(el); return el; },
 	createDiv(this: Element, o?: O) { return (this as any).createEl("div", o); },
 	createSpan(this: Element, o?: O) { return (this as any).createEl("span", o); },
+	createSvg(this: Element, tag: string, o?: O) { const el = makeSvg(tag, o); this.appendChild(el); return el; },
 	empty(this: Element) { this.replaceChildren(); },
 	addClass(this: Element, ...c: string[]) { this.classList.add(...c); },
 	removeClass(this: Element, ...c: string[]) { this.classList.remove(...c); },
@@ -36,6 +44,7 @@ Object.assign(P, {
 });
 (globalThis as any).createEl = make;
 (globalThis as any).createDiv = (o?: O) => make("div", o);
+(globalThis as any).createSvg = makeSvg;
 
 // --- the API surface the plugin imports -----------------------------------------
 export function setIcon(el: HTMLElement, name: string) {
@@ -43,6 +52,7 @@ export function setIcon(el: HTMLElement, name: string) {
 	el.innerHTML = svg ? svg.replace("<svg", '<svg class="svg-icon"') : "";
 }
 export const normalizePath = (p: string) => p;
+export const requireApiVersion = () => true;
 export const debounce = <T extends (...a: any[]) => any>(f: T) => f;
 export const Platform = { isMobile: false, isDesktop: true };
 export const editorLivePreviewField = {};

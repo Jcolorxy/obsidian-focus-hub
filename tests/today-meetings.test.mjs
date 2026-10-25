@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 // pin the zone the dates are bucketed in, so results don't depend on the host
-globalThis.TASK_HUB_TZ = 'Australia/Sydney';
+process.env.TZ = 'Australia/Sydney';
 
 test('meeting timeline has theme-based narrow-container layout rules', () => {
   const css = readFileSync('styles.css', 'utf8');

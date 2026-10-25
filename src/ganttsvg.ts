@@ -252,7 +252,7 @@ export async function svgToPng(svg: string, scale = 2): Promise<ArrayBuffer> {
 		img.onerror = () => reject(new Error("could not render the chart"));
 		img.src = url;
 	});
-	const canvas = document.createElement("canvas");
+	const canvas = createEl("canvas");
 	canvas.width = Math.round(w * scale);
 	canvas.height = Math.round(h * scale);
 	const ctx = canvas.getContext("2d");

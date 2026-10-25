@@ -42,11 +42,11 @@ export class TaskHubSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Focus limit")
 			.setDesc("The most tasks you can put in a day's focus. Fewer is the point.")
-			.addSlider((sl) => sl.setLimits(1, 10, 1).setValue(data.settings.focusLimit).setDynamicTooltip().onChange((v) => void this.plugin.setSettings({ focusLimit: v })));
+			.addSlider((sl) => sl.setLimits(1, 10, 1).setValue(data.settings.focusLimit).onChange((v) => void this.plugin.setSettings({ focusLimit: v })));
 		new Setting(containerEl)
 			.setName("Gone quiet after")
 			.setDesc("Open tasks untouched for this many days are listed as gone quiet.")
-			.addSlider((sl) => sl.setLimits(3, 60, 1).setValue(data.settings.staleDays).setDynamicTooltip().onChange((v) => void this.plugin.setSettings({ staleDays: v })));
+			.addSlider((sl) => sl.setLimits(3, 60, 1).setValue(data.settings.staleDays).onChange((v) => void this.plugin.setSettings({ staleDays: v })));
 
 		new Setting(containerEl)
 			.setName("Meetings note")
@@ -75,7 +75,7 @@ export class TaskHubSettingTab extends PluginSettingTab {
 			.setDesc(data.settings.briefPausedUntil ? `No suggestions before ${formatDate(data.settings.briefPausedUntil)}, on any device.` : "Pause suggestions while you're on leave. Applies to every device.")
 			.addText((t) => bindDate(t.inputEl, data.settings.briefPausedUntil, async (v) => { await this.plugin.setSettings({ briefPausedUntil: v }); this.display(); }));
 		if (data.settings.briefPausedUntil) {
-			pause.addExtraButton((b) => b.setIcon("x").setTooltip("Resume now").onClick(async () => { await this.plugin.setSettings({ briefPausedUntil: null }); this.display(); }));
+			pause.addExtraButton((b) => b.setIcon("x").setTooltip("Resume now").onClick(() => void this.plugin.setSettings({ briefPausedUntil: null }).then(() => this.display())));
 		}
 		const last = data.today.suggestion;
 		new Setting(containerEl)
@@ -115,9 +115,9 @@ export class TaskHubSettingTab extends PluginSettingTab {
 			.setDesc("A category such as Work, Personal, Errand…")
 			.addText((t) => {
 				t.setPlaceholder("New type name");
-				t.inputEl.addEventListener("keydown", async (e) => {
+				t.inputEl.addEventListener("keydown", (e) => {
 					if (e.key !== "Enter") return;
-					if (await this.plugin.addType(t.getValue())) this.display();
+					void this.plugin.addType(t.getValue()).then((added) => { if (added) this.display(); });
 				});
 			})
 			.addButton((b) =>

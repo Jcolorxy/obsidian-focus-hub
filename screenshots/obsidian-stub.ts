@@ -53,6 +53,7 @@ export function setIcon(el: HTMLElement, name: string) {
 }
 export const normalizePath = (p: string) => p;
 export const requireApiVersion = () => true;
+export function addIcon() {}
 export const debounce = <T extends (...a: any[]) => any>(f: T) => f;
 export const Platform = { isMobile: false, isDesktop: true };
 export const editorLivePreviewField = {};

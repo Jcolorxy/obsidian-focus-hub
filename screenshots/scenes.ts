@@ -112,10 +112,14 @@ export async function render(scene: string) {
 	if (scene === "tasks") {
 		const p = await plugin("tasks");
 		const view = new TaskHubView({ app: p.app, host } as never, p);
+		// let the plugin find the view, so clicks and edits redraw it as they would in Obsidian
+		p.app.workspace.getLeavesOfType = () => [{ view }];
 		await view.onOpen();
 	} else if (scene === "today") {
 		const p = await plugin("today");
 		const view = new TodayView({ app: p.app, host } as never, p);
+		// let the plugin find the view, so clicks and edits redraw it as they would in Obsidian
+		p.app.workspace.getLeavesOfType = () => [{ view }];
 		await view.onOpen();
 	} else if (scene === "timeline") {
 		const p = await plugin("timeline");

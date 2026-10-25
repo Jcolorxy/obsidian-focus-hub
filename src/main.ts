@@ -94,7 +94,7 @@ export default class TaskHubPlugin extends Plugin {
 		this.addSettingTab(new TaskHubSettingTab(this.app, this));
 		this.registerEditorExtension(hideMarkerExtension);
 		this.registerMarkdownCodeBlockProcessor("ratio", (source, el, ctx) => renderRatio(source, el, ctx));
-		this.registerMarkdownCodeBlockProcessor("gantt", (source, el, ctx) => renderGanttBlock(this, el, source, ctx.sourcePath));
+		this.registerMarkdownCodeBlockProcessor("gantt", (source, el, ctx) => renderGanttBlock(this, el, source, ctx.sourcePath, ctx));
 
 		this.registerEvent(this.app.vault.on("rename", (file, oldPath) => this.onRename(file, oldPath)));
 		this.registerEvent(this.app.vault.on("delete", (file) => this.onDelete(file)));

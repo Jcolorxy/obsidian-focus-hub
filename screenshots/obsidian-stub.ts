@@ -58,11 +58,12 @@ export const Platform = { isMobile: false, isDesktop: true };
 export const editorLivePreviewField = {};
 
 class Events { on() { return {}; } off() {} trigger() {} }
-export class Component { register() {} registerEvent() {} registerInterval(n: number) { return n; } load() {} unload() {} }
+export class Component { private cleanups: (() => void)[] = []; register(cb: () => void) { this.cleanups.push(cb); } registerEvent() {} registerInterval(n: number) { return n; } load() {} unload() { this.cleanups.splice(0).forEach((cb) => cb()); } }
 export class TFile { path = ""; name = ""; basename = ""; extension = "md"; stat = { mtime: 0, ctime: 0, size: 0 }; parent = null; }
 export class TFolder { path = ""; name = ""; children = []; }
 export class Notice { constructor(_m: string) {} }
 export class Menu { addItem() { return this; } addSeparator() { return this; } showAtMouseEvent() {} }
+export class MarkdownRenderChild extends Component { constructor(public containerEl: HTMLElement) { super(); } }
 export class SecretStorage extends Events {}
 export class SecretComponent { constructor(_a: unknown, _el: HTMLElement) {} setValue() { return this; } onChange() { return this; } }
 export class Modal { app: any; contentEl = make("div"); modalEl = this.contentEl; constructor(app: unknown) { this.app = app; } open() {} close() {} onOpen() {} onClose() {} }

@@ -6,7 +6,7 @@ work on, and **Gantt timelines** for project notes.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jcolorxy)
 
-> Needs Obsidian 1.11.4 or later. Works on desktop and mobile.
+> Needs Obsidian 1.13 or later. Works on desktop and mobile.
 
 ![Timeline for a project note, grouped by phase, with the critical path and progress against plan](docs/timeline.png)
 
@@ -46,6 +46,24 @@ the plugin's data with a restore command.
 
 Everything lives in the plugin's own `data.json` inside your vault's `.obsidian/plugins/focus-hub/`,
 so it travels with Obsidian Sync. Daily backups are kept in the same folder.
+
+### Vault access
+
+Focus Hub works inside your vault and only touches what its features need:
+
+- **Lists files** to fill the note and image pickers, and to find a linked note or image
+  again by name if it was moved outside Obsidian.
+- **Reads notes:** the notes your tasks are linked to (to keep their checkboxes in step), the
+  meetings note if you set one, and, to show which tasks sit on a timeline, each note's text
+  is checked for a `gantt` block. Nothing it reads leaves your device, apart from the task
+  details listed under [Morning suggestion](#morning-suggestion-optional-uses-a-network-service)
+  if you switch that on.
+- **Writes to notes:** a linked note gets its tasks (and their comments) as lines under the
+  heading you choose, while *Add linked tasks to their note* is on. It also writes a timeline
+  note when you create one, and saves images you attach to a task.
+- **Clipboard:** pasting an image onto a task reads that image from the clipboard, and
+  *Copy PNG to clipboard* on a timeline writes the chart image to it. Nothing else reads or
+  writes the clipboard.
 
 ## Morning suggestion (optional, uses a network service)
 

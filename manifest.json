@@ -1,8 +1,8 @@
 {
   "id": "focus-hub",
   "name": "Focus Hub",
-  "version": "0.3.4",
-  "minAppVersion": "1.11.4",
+  "version": "0.3.5",
+  "minAppVersion": "1.13.0",
   "description": "Tasks with statuses, comments and images; a daily Today view; per-note Gantt timelines with dependencies and critical path.",
   "author": "Jcolorxy",
   "isDesktopOnly": false,

@@ -1137,153 +1137,24 @@
 
 /* ----- printing / PDF export ----- */
 /*
- * PDFs are printed on white paper, so the chart drops the theme's colours for a
- * fixed light set. The three bar colours were checked for colourblind separation
- * and contrast against a white surface rather than picked by eye.
+ * On paper the live chart gives way to its print copy: an image of every task in the
+ * light palette the image export uses, so the theme's colours never reach the PDF.
  */
-@media print {
-	body:has(.th-gantt) {
-		background: #fff !important;
-		color: #1a1a1a !important;
-	}
-	.th-gantt-toolbar,
-	.th-gantt-grip,
-	.th-gantt-tip {
-		display: none !important;
-	}
-	.th-gantt,
-	.th-gantt * {
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
-	}
-	.th-gantt-scroll {
-		overflow: visible !important;
-		background: #fff;
-		border: 1px solid #ccc;
-	}
-	.th-gantt-table {
-		--th-gantt-side: 200px;
-	}
-	/* sticky columns and page breaks do not mix */
-	.th-gantt-side,
-	.th-gantt-head {
-		position: static !important;
-		background: #fff !important;
-		border-color: #ccc !important;
-	}
-	.th-gantt-row {
-		page-break-inside: avoid;
-	}
-	.th-gantt-row:hover .th-gantt-side,
-	.th-gantt-row:hover .th-gantt-lane {
-		background: transparent !important;
-	}
-	.th-gantt-title,
-	.th-gantt-label-text {
-		color: #1a1a1a !important;
-	}
-	.th-gantt-month {
-		color: #333 !important;
-		border-color: #ccc !important;
-	}
-	.th-gantt-tick,
-	.th-gantt-head-side,
-	.th-gantt-legend {
-		color: #555 !important;
-	}
-	.th-gantt-grid {
-		background: #ddd !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-weekend {
-		background: #f4f4f4 !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-today {
-		background: #444 !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-bar {
-		box-shadow: none !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-bar.is-open,
-	.th-gantt-dot.is-open { background: #2d6cdf !important; }
-	.th-gantt-bar.is-hold,
-	.th-gantt-dot.is-hold { background: #c1750f !important; }
-	.th-gantt-bar.is-closed,
-	.th-gantt-dot.is-closed { background: #1f8a70 !important; }
-	.th-gantt-bar.is-late { outline-color: #d03b3b !important; }
-	.th-gantt-bar-text,
-	.th-gantt-bar-flag {
-		color: #fff !important;
-	}
-	.th-gantt-bar-outside {
-		color: #333 !important;
-	}
-	.th-gantt-bar-outside .th-gantt-bar-flag {
-		color: #d03b3b !important;
-	}
-	.th-gantt-links {
-		color: #666 !important;
-	}
-	.th-gantt-row.is-group,
-	.th-gantt-label.is-group {
-		background: #f2f2f2 !important;
-	}
-	.th-gantt-summary,
-	.th-gantt-summary::before,
-	.th-gantt-summary::after {
-		background: #555 !important;
-		border-top-color: #555 !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-milestone.is-open { background: #2d6cdf !important; }
-	.th-gantt-milestone.is-hold { background: #c1750f !important; }
-	.th-gantt-milestone.is-closed { background: #1f8a70 !important; }
-	.th-gantt-milestone,
-	.th-gantt-bar.is-critical,
-	.th-gantt-milestone.is-critical {
-		box-shadow: none !important;
-	}
-	.th-gantt-bar.is-critical,
-	.th-gantt-milestone.is-critical {
-		outline: 2px solid #d03b3b !important;
-		outline-offset: 1px;
-	}
-	.th-gantt-progress {
-		background: rgba(0, 0, 0, 0.3) !important;
-	}
-	.th-gantt-baseline {
-		background: #999 !important;
-		opacity: 1 !important;
-	}
-	.th-gantt-link[data-critical="true"] {
-		stroke: #d03b3b !important;
-	}
-	.th-gantt-label-meta,
-	.th-gantt-summary-pct,
-	.th-gantt-band-count {
-		color: #555 !important;
-	}
-	.th-gantt-handle {
-		display: none !important;
-	}
-	.th-gantt-link {
-		opacity: 1 !important;
-	}
-}
-
-/* the print copy of the chart is built alongside the live one but never shown on screen */
 .th-gantt-print-only {
 	display: none;
 }
+.th-gantt-print-only img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
 @media print {
-	.th-gantt-wrap > .th-gantt {
-		display: none !important;
+	.th-gantt-wrap > .th-gantt,
+	.th-gantt-wrap > .th-gantt-toolbar {
+		display: none;
 	}
-	.th-gantt-print-only {
-		display: block !important;
+	.th-gantt-wrap > .th-gantt-print-only {
+		display: block;
 	}
 }
 
@@ -1299,35 +1170,33 @@
 
 /*
  * Obsidian caps note content at the readable line length, which squeezes a timeline
- * into the middle of a wide pane. The caps differ per view (taken from app.css):
- * reading view caps only the sizer, while Live Preview caps the sizer, the content
- * and every line — releasing just the sizer moved the chart left without widening it.
- * Each cap is lifted only for the container holding a full-width chart; everything
- * else is put back into a readable, centred column.
+ * into the middle of a wide pane. A full-width chart marks the containers around it
+ * (see markWide in ganttview.ts) and the cap is lifted only there; everything else is
+ * put back into a readable, centred column. Reading view caps only the sizer; Live
+ * Preview caps the sizer, the content and every line.
  */
 
 /* reading view */
-.markdown-preview-view.is-readable-line-width .markdown-preview-sizer:has(.th-gantt-wrap.is-fullwidth) {
-	max-width: none !important;
+.markdown-preview-view.is-readable-line-width .markdown-preview-sizer.th-wide-sizer {
+	max-width: none;
 }
-.markdown-preview-view.is-readable-line-width .markdown-preview-sizer:has(.th-gantt-wrap.is-fullwidth) > *:not(:has(.th-gantt-wrap.is-fullwidth)) {
+.markdown-preview-view.is-readable-line-width .markdown-preview-sizer.th-wide-sizer > :not(.th-wide-host) {
 	max-width: var(--file-line-width);
 	margin-inline: auto;
 }
 
 /* Live Preview */
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer:has(.th-gantt-wrap.is-fullwidth),
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-content:has(.th-gantt-wrap.is-fullwidth) {
-	max-width: none !important;
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer.th-wide-sizer,
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer.th-wide-sizer .cm-content {
+	max-width: none;
 }
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-content:has(.th-gantt-wrap.is-fullwidth) > .cm-line {
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer.th-wide-sizer .cm-content > .cm-line {
 	margin-inline: auto;
 }
-.markdown-source-view.mod-cm6.is-readable-line-width .cm-line:has(.th-gantt-wrap.is-fullwidth),
-.markdown-source-view.mod-cm6 .cm-embed-block:has(.th-gantt-wrap.is-fullwidth) {
-	max-width: none !important;
-	width: 100% !important;
-	margin-inline: 0 !important;
+.markdown-source-view.mod-cm6 .cm-sizer.th-wide-sizer .cm-embed-block.th-wide-host {
+	max-width: none;
+	width: 100%;
+	margin-inline: 0;
 }
 
 .th-gantt-wrap.is-fullwidth {
@@ -1339,8 +1208,8 @@
 	background: rgba(var(--color-yellow-rgb), 0.15);
 	color: var(--color-yellow);
 }
-.th-gantt-bar.is-unscheduled {
-	background: transparent !important;
+.th-gantt-lane > .th-gantt-bar.is-unscheduled {
+	background: transparent;
 	border: 1.5px dashed var(--text-faint);
 	box-shadow: none;
 }
@@ -1371,14 +1240,6 @@
 .th-gantt-missing .th-gantt-icon svg {
 	width: 13px;
 	height: 13px;
-}
-@media print {
-	.th-gantt-bar.is-unscheduled {
-		border-color: #999 !important;
-	}
-	.th-gantt-legend-unscheduled {
-		border-color: #999 !important;
-	}
 }
 
 /* ----- % complete tile + meter ----- */
@@ -1455,18 +1316,17 @@
 }
 
 @media print {
-	.th-progress {
-		background: #fff !important;
-		border-color: #ccc !important;
+	body .th-progress {
+		background: #fff;
+		border-color: #ccc;
 	}
-	.th-progress-label, .th-progress-detail { color: #555 !important; }
-	.th-progress-value, .th-progress-delta { color: #1a1a1a !important; }
-	.th-progress-track { background: #d6e3f8 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-	.th-progress-fill { background: #2d6cdf !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-	.th-progress-expected { background: #1a1a1a !important; }
-	.th-progress-delta.is-behind .th-progress-delta-icon { color: #c1750f !important; }
-	.th-progress-delta.is-ahead .th-progress-delta-icon,
-	.th-progress-delta.is-on-track .th-progress-delta-icon { color: #1f8a70 !important; }
+	body .th-progress-label, body .th-progress-detail { color: #555; }
+	body .th-progress-value, body .th-progress-delta { color: #1a1a1a; }
+	body .th-progress-track { background: #d6e3f8; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+	body .th-progress-fill { background: #2d6cdf; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+	body .th-progress-expected { background: #1a1a1a; }
+	body .th-progress-delta.is-behind .th-progress-delta-icon { color: #c1750f; }
+	body .th-progress-delta.is-ahead .th-progress-delta-icon, body .th-progress-delta.is-on-track .th-progress-delta-icon { color: #1f8a70; }
 }
 
 /* ===== Today view ===== */

@@ -1,4 +1,4 @@
-import { App, FuzzyMatch, FuzzySuggestModal, Modal, Notice, Setting, TFile, normalizePath, requireApiVersion } from "obsidian";
+import { App, FuzzyMatch, FuzzySuggestModal, Modal, Notice, Setting, TFile, normalizePath } from "obsidian";
 import type TaskHubPlugin from "./main";
 import { Task, basename, formatDate, isImagePath, todayISO } from "./types";
 import { computeSchedule } from "./schedule";
@@ -321,12 +321,7 @@ export class DueDateModal extends Modal {
 			window.setTimeout(() => input.focus(), 0);
 		});
 		const row = new Setting(contentEl);
-		row.addButton((b) => {
-			// setDestructive arrived in Obsidian 1.13; older versions take the class it sets
-			if (requireApiVersion("1.13.0")) b.setDestructive();
-			else b.buttonEl.addClass("mod-warning");
-			b.setButtonText("Clear").onClick(() => this.done(null));
-		});
+		row.addButton((b) => b.setButtonText("Clear").setDestructive().onClick(() => this.done(null)));
 		row.addButton((b) => b.setButtonText("Set").setCta().onClick(() => this.done(this.value || null)));
 	}
 	private done(v: string | null) {

@@ -1,4 +1,4 @@
-import { Menu, Notice, setIcon } from "obsidian";
+import { MarkdownRenderChild, Menu, Notice, setIcon } from "obsidian";
 import type TaskHubPlugin from "./main";
 import { GAP_LABEL, STATUSES, Status, Task, basename, formatDate, schedulingGap, todayISO } from "./types";
 import {
@@ -137,26 +137,29 @@ export function banded(rows: Scheduled[], group: GroupBy): Band[] {
 }
 
 /** Renders the chart into `el`. Used by the ```gantt code block. */
+/**
+ * The plan's % complete tile. Progress is always over the whole plan: a status filter
+ * that hides closed tasks would otherwise make the project look 0% done.
+ */
+function renderPlanMeter(plugin: TaskHubPlugin, parent: HTMLElement, o: GanttOptions) {
+	const plan = prepareRows(plugin, { ...o, status: "all", unscheduled: true, from: undefined, to: undefined });
+	const p = scheduleProgress(plan.rows, plan.today, plan.cal, progressOf);
+	const closed = plan.rows.filter((r) => r.task.status === "closed").length;
+	if (!plan.rows.length || !p.counted) return;
+	renderMeter(parent, {
+		label: "Complete",
+		pct: p.actual,
+		detail: `${closed} of ${plan.rows.length} tasks closed` + (p.skipped ? ` · ${p.skipped} unscheduled not counted` : ""),
+		expected: p.expected,
+		delta: p.delta,
+	});
+}
+
 export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOptions, onChange?: () => void) {
 	const root = el.createDiv({ cls: "th-gantt" });
 	if (o.title) root.createDiv({ cls: "th-gantt-title", text: o.title });
 
-	// progress is always over the whole plan: a status filter that hides closed
-	// tasks would otherwise make the project look 0% done
-	{
-		const plan = prepareRows(plugin, { ...o, status: "all", unscheduled: true, from: undefined, to: undefined });
-		const p = scheduleProgress(plan.rows, plan.today, plan.cal, progressOf);
-		const closed = plan.rows.filter((r) => r.task.status === "closed").length;
-		if (plan.rows.length && p.counted) {
-			renderMeter(root, {
-				label: "Complete",
-				pct: p.actual,
-				detail: `${closed} of ${plan.rows.length} tasks closed` + (p.skipped ? ` · ${p.skipped} unscheduled not counted` : ""),
-				expected: p.expected,
-				delta: p.delta,
-			});
-		}
-	}
+	renderPlanMeter(plugin, root, o);
 
 	const today = todayISO();
 	const cal: Calendar = plugin.calendar;
@@ -712,13 +715,16 @@ export function parseGanttBlock(source: string, sourcePath: string): GanttOption
 }
 
 /** The full block: a toolbar plus the chart, redrawn in place when a control changes. */
-export function renderGanttBlock(plugin: TaskHubPlugin, el: HTMLElement, source: string, sourcePath: string) {
+export function renderGanttBlock(plugin: TaskHubPlugin, el: HTMLElement, source: string, sourcePath: string, ctx?: { addChild(child: MarkdownRenderChild): void }) {
 	const options = parseGanttBlock(source, sourcePath);
 	let lastWidth = 0;
+	let observer: ResizeObserver | null = null;
+	let unmarkWide: (() => void) | null = null;
 	const draw = () => {
 		el.empty();
+		observer?.disconnect();
+		observer = null;
 		const wrap = el.createDiv({ cls: "th-gantt-wrap is-embedded" });
-		// the stylesheet widens the note's content wrapper when it sees this class
 		wrap.toggleClass("is-fullwidth", options.width === "full");
 		const bar = wrap.createDiv({ cls: "th-gantt-toolbar" });
 
@@ -804,29 +810,89 @@ export function renderGanttBlock(plugin: TaskHubPlugin, el: HTMLElement, source:
 		const pane = scrollParent(el);
 		if (pane && options.width === "full") {
 			lastWidth = pane.clientWidth;
-			const observer = new ResizeObserver(() => {
+			observer = new ResizeObserver(() => {
 				if (Math.abs(pane.clientWidth - lastWidth) < 24) return;
 				lastWidth = pane.clientWidth;
 				draw();
 			});
 			observer.observe(pane);
 		}
+		unmarkWide?.();
+		unmarkWide = options.width === "full" ? markWide(wrap) : null;
 
-		// A second copy that only exists on paper: every task in this note, whatever the
-		// screen is filtered to, sized to the page rather than to the pane.
-		const printOnly = wrap.createDiv({ cls: "th-gantt-print-only" });
-		renderGantt(plugin, printOnly, {
-			...options,
-			status: "all",
-			unscheduled: true,
-			zoom: "fit",
-			fitWidth: 760,
-			interactive: false,
-			collapsedGroups: new Set(),
-		});
+		// A copy that only exists on paper: every task in this note, whatever the screen
+		// is filtered to, as the same light-palette image the image export makes, so the
+		// PDF needs no print overrides of the theme's colours.
+		const svg = ganttToSvg(plugin, { ...options, status: "all", unscheduled: true, zoom: "fit", interactive: false, collapsedGroups: new Set() }, 1000);
+		if (svg) {
+			const paper = wrap.createDiv({ cls: "th-gantt-print-only" });
+			renderPlanMeter(plugin, paper, options);
+			paper.createEl("img", {
+				attr: { src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`, alt: "Timeline" },
+			});
+		}
 	};
 	draw();
+
+	if (ctx) {
+		const child = new MarkdownRenderChild(el);
+		child.register(() => {
+			observer?.disconnect();
+			unmarkWide?.();
+		});
+		ctx.addChild(child);
+	}
 }
+
+/*
+ * Obsidian caps note content at the readable line length, which squeezes a full-width
+ * timeline into the middle of a wide pane. The chart marks the containers around it
+ * (reading view: the sizer and the section holding the chart; Live Preview: the sizer
+ * and the embed block), and the stylesheet lifts the cap only there. Marks are counted
+ * so two charts in one note don't unmark each other.
+ */
+const wideMarks = new WeakMap<Element, number>();
+
+function addMark(target: Element, cls: string) {
+	wideMarks.set(target, (wideMarks.get(target) ?? 0) + 1);
+	target.addClass(cls);
+}
+
+function dropMark(target: Element, cls: string) {
+	const n = (wideMarks.get(target) ?? 1) - 1;
+	wideMarks.set(target, n);
+	if (n <= 0) target.removeClass(cls);
+}
+
+function markWide(wrap: HTMLElement): () => void {
+	let marked: [Element, string][] = [];
+	let frames = 0;
+	let pending = 0;
+	const mark = () => {
+		pending = 0;
+		// the block is rendered before Obsidian attaches it to the note
+		if (!wrap.isConnected) {
+			if (++frames < 120) pending = window.requestAnimationFrame(mark);
+			return;
+		}
+		const sizer = wrap.closest(".markdown-preview-sizer, .cm-sizer");
+		if (!sizer) return;
+		let host: Element | null = wrap.closest(".cm-embed-block");
+		if (!host) {
+			host = wrap;
+			while (host.parentElement && host.parentElement !== sizer) host = host.parentElement;
+		}
+		marked = [[sizer, "th-wide-sizer"], [host, "th-wide-host"]];
+		for (const [target, cls] of marked) addMark(target, cls);
+	};
+	mark();
+	return () => {
+		if (pending) window.cancelAnimationFrame(pending);
+		for (const [target, cls] of marked) dropMark(target, cls);
+		marked = [];
+	};
+}
+
 
 /** The pane the note scrolls in, in either reading or editing view. */
 function scrollParent(el: HTMLElement): HTMLElement | null {

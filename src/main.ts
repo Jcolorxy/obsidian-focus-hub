@@ -56,7 +56,7 @@ export default class TaskHubPlugin extends Plugin {
 		this.addRibbonIcon("list-checks", "Open Focus Hub", () => this.activateView());
 		this.addRibbonIcon("sun", "Open Today", () => this.activateView(TODAY_VIEW_TYPE));
 
-		this.addCommand({ id: "open", name: "Open Focus Hub", callback: () => this.activateView() });
+		this.addCommand({ id: "open", name: "Open task list", callback: () => this.activateView() });
 		this.addCommand({ id: "open-today", name: "Open Today", callback: () => this.activateView(TODAY_VIEW_TYPE) });
 		this.addCommand({ id: "new-task", name: "New task", callback: () => new TaskModal(this.app, this).open() });
 		this.addCommand({

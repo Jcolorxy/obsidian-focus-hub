@@ -106,7 +106,7 @@ export class NewNoteModal extends Modal {
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") { e.preventDefault(); void this.submit(); }
 			});
-			setTimeout(() => { t.inputEl.focus(); t.inputEl.select(); }, 0);
+			window.setTimeout(() => { t.inputEl.focus(); t.inputEl.select(); }, 0);
 		});
 		new Setting(contentEl).setName("Folder").addDropdown((d) => {
 			const folders = this.app.vault.getAllFolders(true).sort((a, b) => a.path.localeCompare(b.path));
@@ -182,7 +182,7 @@ export class TaskModal extends Modal {
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") { e.preventDefault(); this.submit(); }
 			});
-			setTimeout(() => t.inputEl.focus(), 0);
+			window.setTimeout(() => t.inputEl.focus(), 0);
 		});
 
 		new Setting(contentEl).setName("Type").addDropdown((d) => {
@@ -237,7 +237,7 @@ export class PromptModal extends Modal {
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") { e.preventDefault(); this.submit(); }
 			});
-			setTimeout(() => { t.inputEl.focus(); t.inputEl.select(); }, 0);
+			window.setTimeout(() => { t.inputEl.focus(); t.inputEl.select(); }, 0);
 		});
 		new Setting(contentEl).addButton((b) => b.setButtonText("OK").setCta().onClick(() => this.submit()));
 	}
@@ -273,7 +273,7 @@ export class CommentModal extends Modal {
 			if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.submit(this.value); }
 			if (e.key === "Escape") { e.preventDefault(); this.submit(null); }
 		});
-		setTimeout(() => ta.focus(), 0);
+		window.setTimeout(() => ta.focus(), 0);
 		const row = new Setting(contentEl);
 		row.addButton((b) => b.setButtonText(this.opts.skipLabel ?? "Skip").onClick(() => this.submit(null)));
 		row.addButton((b) => b.setButtonText(this.opts.submitLabel ?? "Save").setCta().onClick(() => this.submit(this.value)));
@@ -318,7 +318,7 @@ export class DueDateModal extends Modal {
 				e.preventDefault();
 				if (commit()) this.done(this.value || null);
 			});
-			setTimeout(() => input.focus(), 0);
+			window.setTimeout(() => input.focus(), 0);
 		});
 		const row = new Setting(contentEl);
 		row.addButton((b) => b.setButtonText("Clear").setWarning().onClick(() => this.done(null)));
@@ -587,7 +587,7 @@ export class PrerequisitePickerModal extends Modal {
 		});
 
 		this.drawList();
-		setTimeout(() => search.focus(), 0);
+		window.setTimeout(() => search.focus(), 0);
 	}
 
 	private addBtn?: { setButtonText(t: string): unknown; setDisabled(v: boolean): unknown };

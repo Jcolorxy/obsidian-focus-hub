@@ -8,7 +8,7 @@ work on, and **Gantt timelines** for project notes.
 
 > Needs Obsidian 1.13 or later. Works on desktop and mobile.
 
-![Focus Hub in action: searching and filtering tasks, adding one, planning the day in Today, and dragging a bar on a timeline](docs/showreel.gif)
+![Planning the day in Today, then rescheduling a timeline by dragging a bar and stretching another; the tasks that depend on them move with them](docs/planning.gif)
 
 ![Timeline for a project note, grouped by phase, with the critical path and progress against plan](docs/timeline.png)
 
@@ -16,9 +16,11 @@ work on, and **Gantt timelines** for project notes.
 |---|---|
 | ![The Today view: suggested focus, today's focus, what's on the plan, coming up, waiting on and project progress](docs/today.png) | ![The task list with statuses, types, linked notes, due dates, images and comments](docs/tasks.png) |
 
-<sub>Screenshots and the showreel use made-up demo data. Regenerate them with `node screenshots/shoot.mjs` and `node screenshots/showreel.mjs`.</sub>
+<sub>Screenshots and the showreel use made-up demo data. Regenerate them with `node screenshots/shoot.mjs`, `node screenshots/showreel.mjs` and `node screenshots/showreel-planning.mjs`.</sub>
 
 ## Features
+
+![Focus Hub in action: searching and filtering tasks, adding one, planning the day in Today, and dragging a bar on a timeline](docs/showreel.gif)
 
 **Tasks**
 - Open / On Hold / Closed statuses, types (categories) and a linked note per task

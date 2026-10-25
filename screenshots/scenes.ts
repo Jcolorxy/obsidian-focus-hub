@@ -75,7 +75,7 @@ const files: Record<string, string> = {
 	"samples-2.svg": photo("#d9dde3", "#8b929c"),
 };
 
-async function plugin(view: "tasks" | "today" | "timeline") {
+async function plugin(view: "tasks" | "today" | "today-fresh" | "timeline") {
 	const app = fakeApp(files);
 	const p = new FocusHub(app as never, { id: "focus-hub", dir: ".obsidian/plugins/focus-hub", version: "0.3.1" } as never) as any;
 	const data = {
@@ -89,7 +89,8 @@ async function plugin(view: "tasks" | "today" | "timeline") {
 			briefPausedUntil: null, meetingsNotePath: "" },
 		deleted: {},
 		today: {
-			date: iso(0), focus: [wires.id, samples.id], carried: [wires.id], reviewed: null,
+			// today-fresh: the morning before anything is chosen, for the showreel
+				date: iso(0), focus: view === "today-fresh" ? [] : [wires.id, samples.id], carried: view === "today-fresh" ? [] : [wires.id], reviewed: null,
 			suggestion: {
 				date: iso(0), model: "claude-opus-5", source: "Obsidian", generatedAt: Date.now(),
 				summary: "A design-heavy day: the wireframes gate the sign-off, and the benchtop samples are due the day after tomorrow.",
@@ -115,8 +116,8 @@ export async function render(scene: string) {
 		// let the plugin find the view, so clicks and edits redraw it as they would in Obsidian
 		p.app.workspace.getLeavesOfType = () => [{ view }];
 		await view.onOpen();
-	} else if (scene === "today") {
-		const p = await plugin("today");
+	} else if (scene === "today" || scene === "today-fresh") {
+		const p = await plugin(scene);
 		const view = new TodayView({ app: p.app, host } as never, p);
 		// let the plugin find the view, so clicks and edits redraw it as they would in Obsidian
 		p.app.workspace.getLeavesOfType = () => [{ view }];

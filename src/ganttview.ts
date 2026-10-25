@@ -469,8 +469,10 @@ export function renderGantt(plugin: TaskHubPlugin, el: HTMLElement, o: GanttOpti
 			if (r.cyclic) lines.push("⚠ Circular prerequisites — links ignored");
 			return lines.join("\n");
 		};
-		bar.addEventListener("mouseenter", (e) => showTip(e, describe()));
-		bar.addEventListener("mousemove", (e) => showTip(e, describe()));
+		// while dragging, the drag's own readout (new start or duration) owns the tip;
+		// mousemove fires after pointermove and would otherwise replace it
+		bar.addEventListener("mouseenter", (e) => { if (!bar.hasClass("is-live")) showTip(e, describe()); });
+		bar.addEventListener("mousemove", (e) => { if (!bar.hasClass("is-live")) showTip(e, describe()); });
 		bar.addEventListener("mouseleave", () => tip.hide());
 		bar.setAttr("aria-label", describe());
 

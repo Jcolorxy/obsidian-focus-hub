@@ -40,6 +40,8 @@ const scenes = [
 	{ name: "tasks", width: 1100, height: 860 },
 	{ name: "today", width: 1280, height: 980 },
 	{ name: "timeline", width: 1580, height: 760 },
+	// pages the showreels drive; not photographed
+	{ name: "today-fresh", pageOnly: true },
 ];
 for (const s of scenes) {
 	const html = `<!doctype html><html><head><meta charset="utf-8"><style>${theme}\n${styles}</style></head>
@@ -48,6 +50,7 @@ for (const s of scenes) {
 <script>renderScene(${JSON.stringify(s.name)});</script></body></html>`;
 	const page = join(out, `${s.name}.html`);
 	writeFileSync(page, html);
+	if (s.pageOnly) continue;
 	execFileSync("chromium", ["--headless", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
 		`--window-size=${s.width},${s.height}`, "--virtual-time-budget=4000",
 		`--screenshot=${join(docs, `${s.name}.png`)}`, `file://${page}`], { stdio: "ignore" });

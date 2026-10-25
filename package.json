@@ -1,6 +1,6 @@
 {
   "name": "obsidian-focus-hub",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Tasks with statuses, comments and images; a daily Today view; per-note Gantt timelines with dependencies and critical path.",
   "main": "main.js",
   "scripts": {
